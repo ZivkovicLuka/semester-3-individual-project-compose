@@ -1,0 +1,39 @@
+stages:
+  - build
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+
+# Use the official Docker-in-Docker image
+image: docker:latest
+
+services:
+  - docker:dind
+
+before_script:
+  # Authenticate Docker with GitLab's built-in registry (optional but professional)
+  - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin
+
+# Build backend image
+build_backend:
+  stage: build
+  script:
+    - echo "Building backend image..."
+    - docker build -t $CI_REGISTRY_IMAGE/backend:latest ./backend/football-website
+
+# Build frontend image
+build_frontend:
+  stage: build
+  script:
+    - echo "Building frontend image..."
+    - docker build -t $CI_REGISTRY_IMAGE/frontend:latest ./frontend
+
+# OPTIONAL: Push images to GitLab Registry (enable this if you want to keep images online)
+push_images:
+  stage: build
+  script:
+    - docker push $CI_REGISTRY_IMAGE/backend:latest
+    - docker push $CI_REGISTRY_IMAGE/frontend:latest
+  only:
+    - main
