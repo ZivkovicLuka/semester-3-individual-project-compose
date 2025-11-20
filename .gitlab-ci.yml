@@ -4,9 +4,6 @@ stages:
   - deploy
   - verify
 
-# -----------------------------
-# VALIDATE CONFIG
-# -----------------------------
 validate_compose:
   stage: validate
   script:
@@ -15,26 +12,21 @@ validate_compose:
   only:
     - main
 
-# -----------------------------
-# BASIC TESTS
-# -----------------------------
 test_infra:
   stage: test
-  needs: ["validate_compose"]
+  needs:
+    - validate_compose
   script:
     - echo "Running basic infra tests..."
-    - test -f docker-compose.yml
-    - echo "OK: docker-compose.yml exists"
-    - echo "OK: Validation stage passed"
+    - if [ -f docker-compose.yml ]; then echo "OK: compose file exists"; else echo "Missing docker-compose.yml"; exit 1; fi
+    - echo "OK: validation stage passed"
   only:
     - main
 
-# -----------------------------
-# DEPLOY SERVICES
-# -----------------------------
 deploy_stack:
   stage: deploy
-  needs: ["test_infra"]
+  needs:
+    - test_infra
   script:
     - echo "Pulling latest images..."
     - docker compose pull
@@ -43,17 +35,14 @@ deploy_stack:
   only:
     - main
 
-# -----------------------------
-# VERIFY DEPLOYMENT
-# -----------------------------
 verify_stack:
   stage: verify
-  needs: ["deploy_stack"]
+  needs:
+    - deploy_stack
   script:
-    - echo "Checking service status..."
+    - echo "Checking running containers..."
     - docker compose ps
-    - echo "Checking logs..."
+    - echo "Fetching logs..."
     - docker compose logs --tail=50
-    - echo "Verification complete."
   only:
     - main
