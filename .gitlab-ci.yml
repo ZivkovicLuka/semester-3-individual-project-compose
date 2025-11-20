@@ -7,8 +7,8 @@ stages:
 validate_compose:
   stage: validate
   script:
-    - "echo Validating docker-compose.yml..."
-    - "docker compose config"
+    - Write-Host "Validating docker-compose.yml..."
+    - docker compose config
   only:
     - main
 
@@ -17,10 +17,15 @@ test_infra:
   needs:
     - validate_compose
   script:
-    - "echo Running basic infra tests..."
-    - "test -f docker-compose.yml || (echo Missing docker-compose.yml && exit 1)"
-    - "echo OK: compose file exists"
-    - "echo OK: validation stage passed"
+    - Write-Host "Running basic infra tests..."
+    - |
+      if (-Not (Test-Path "docker-compose.yml")) {
+          Write-Host "❌ Missing docker-compose.yml"
+          exit 1
+      } else {
+          Write-Host "✅ docker-compose.yml exists"
+      }
+    - Write-Host "✅ Validation stage passed"
   only:
     - main
 
@@ -29,10 +34,10 @@ deploy_stack:
   needs:
     - test_infra
   script:
-    - "echo Pulling latest images..."
-    - "docker compose pull"
-    - "echo Starting containers..."
-    - "docker compose up -d --remove-orphans"
+    - Write-Host "Pulling latest images..."
+    - docker compose pull
+    - Write-Host "Starting containers..."
+    - docker compose up -d --remove-orphans
   only:
     - main
 
@@ -41,9 +46,9 @@ verify_stack:
   needs:
     - deploy_stack
   script:
-    - "echo Checking running containers..."
-    - "docker compose ps"
-    - "echo Fetching logs..."
-    - "docker compose logs --tail=50"
+    - Write-Host "Checking running containers..."
+    - docker compose ps
+    - Write-Host "Fetching logs..."
+    - docker compose logs --tail=50
   only:
     - main
