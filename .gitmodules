@@ -1,6 +1,6 @@
 [submodule "frontend"]
 	path = frontend
-	url = https://git.fhict.nl/I555567/semester-3-individual-project-frontend.git
+	url = git@git.fhict.nl:I555567/semester-3-individual-project-frontend.git
 [submodule "backend"]
 	path = backend
-	url = https://git.fhict.nl/I555567/semester-3-individual-project-backend.git
+	url = git@git.fhict.nl:I555567/semester-3-individual-project-backend.git
