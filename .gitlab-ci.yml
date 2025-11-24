@@ -29,7 +29,7 @@ test_infra:
     - validate_compose
   script:
     - echo "Running basic infra tests..."
-    - powershell -Command "if (-Not (Test-Path docker-compose.yml)) { Write-Error 'Missing docker-compose.yml'; exit 1 }"
+    - powershell -Command 'if (-Not (Test-Path "docker-compose.yml")) { Write-Error "Missing docker-compose.yml"; exit 1 }'
     - echo "OK: compose file exists"
     - echo "OK: validation stage passed"
   only:
