@@ -11,6 +11,7 @@ prepare_submodules:
     - git submodule set-url frontend "https://gitlab-ci-token:${CI_SUBMODULE_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-frontend.git"
     - git submodule set-url backend  "https://gitlab-ci-token:${CI_SUBMODULE_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-backend.git"
     - git submodule update --init --recursive
+    - git submodule update --remote backend
   only:
     - main
 
