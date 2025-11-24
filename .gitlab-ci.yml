@@ -8,8 +8,8 @@ prepare_submodules:
   stage: prepare
   script:
     - git submodule sync
-    - git submodule set-url frontend "https://gitlab-ci-token:${CI_JOB_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-frontend.git"
-    - git submodule set-url backend "https://gitlab-ci-token:${CI_JOB_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-backend.git"
+    - git submodule set-url frontend "https://gitlab-ci-token:${CI_SUBMODULE_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-frontend.git"
+    - git submodule set-url backend  "https://gitlab-ci-token:${CI_SUBMODULE_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-backend.git"
     - git submodule update --init --recursive
   only:
     - main
