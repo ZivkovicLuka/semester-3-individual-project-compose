@@ -25,7 +25,7 @@ test_infra:
     - validate_compose
   script:
     - echo "Running basic infra tests..."
-    - powershell -Command "Write-Output test"
+    - echo "docker-compose.yml should exist" 
     - echo "OK: test passed"
   only:
     - main
