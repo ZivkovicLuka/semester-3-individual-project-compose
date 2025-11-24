@@ -1,16 +1,27 @@
-variables:
-  GIT_SUBMODULE_STRATEGY: recursive
-
 stages:
   - validate
   - test
   - deploy
   - verify
 
+before_script:
+  - git submodule sync
+    
+  # Override submodule URLs with CI_JOB_TOKEN (works in GitLab CE)
+  - git submodule set-url frontend "https://gitlab-ci-token:${CI_JOB_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-frontend.git"
+  - git submodule set-url backend  "https://gitlab-ci-token:${CI_JOB_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-backend.git"
+
+  # Pull submodules
+  - git submodule update --init --recursive
+
+
 validate_compose:
   stage: validate
   script:
-    - Write-Host "Validating docker-compose.yml..."
+    - git submodule sync
+    - git submodule update --init --recursive
+    - echo "Submodules updated"
+    - echo "Validating docker-compose.yml..."
     - docker compose config
   only:
     - main
@@ -20,15 +31,10 @@ test_infra:
   needs:
     - validate_compose
   script:
-    - Write-Host "Running basic infra tests..."
-    - |
-      if (-Not (Test-Path "docker-compose.yml")) {
-          Write-Host "❌ Missing docker-compose.yml"
-          exit 1
-      } else {
-          Write-Host "✅ docker-compose.yml exists"
-      }
-    - Write-Host "✅ Validation stage passed"
+    - echo "Running basic infra tests..."
+    - powershell -Command "if (-Not (Test-Path docker-compose.yml)) { Write-Error 'Missing docker-compose.yml'; exit 1 }"
+    - echo "OK: compose file exists"
+    - echo "OK: validation stage passed"
   only:
     - main
 
@@ -37,9 +43,9 @@ deploy_stack:
   needs:
     - test_infra
   script:
-    - Write-Host "Pulling latest images..."
+    - echo "Pulling latest images..."
     - docker compose pull
-    - Write-Host "Starting containers..."
+    - echo "Starting containers..."
     - docker compose up -d --remove-orphans
   only:
     - main
@@ -49,9 +55,9 @@ verify_stack:
   needs:
     - deploy_stack
   script:
-    - Write-Host "Checking running containers..."
+    - echo "Checking running containers..."
     - docker compose ps
-    - Write-Host "Fetching logs..."
+    - echo "Fetching logs..."
     - docker compose logs --tail=50
   only:
     - main
