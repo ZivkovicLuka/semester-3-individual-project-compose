@@ -1,32 +1,34 @@
 stages:
+  - prepare
   - validate
   - test
   - deploy
-  - verify
 
-
-validate_compose:
-  stage: validate
+prepare_submodules:
+  stage: prepare
   script:
     - git submodule sync
     - git submodule set-url frontend "https://gitlab-ci-token:${CI_JOB_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-frontend.git"
-    - git submodule set-url backend  "https://gitlab-ci-token:${CI_JOB_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-backend.git"
+    - git submodule set-url backend "https://gitlab-ci-token:${CI_JOB_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-backend.git"
     - git submodule update --init --recursive
-    - echo "Submodules updated"
-    - echo "Validating docker-compose.yml..."
-    - docker compose config
   only:
     - main
 
+validate_compose:
+  stage: validate
+  needs:
+    - prepare_submodules
+  script:
+    - docker compose config
+  only:
+    - main
 
 test_infra:
   stage: test
   needs:
     - validate_compose
   script:
-    - echo "Running basic infra tests..."
-    - echo "docker-compose.yml should exist" 
-    - echo "OK: test passed"
+    - if not exist docker-compose.yml exit 1
   only:
     - main
 
@@ -35,21 +37,7 @@ deploy_stack:
   needs:
     - test_infra
   script:
-    - echo "Pulling latest images..."
     - docker compose pull
-    - echo "Starting containers..."
     - docker compose up -d --remove-orphans
-  only:
-    - main
-
-verify_stack:
-  stage: verify
-  needs:
-    - deploy_stack
-  script:
-    - echo "Checking running containers..."
-    - docker compose ps
-    - echo "Fetching logs..."
-    - docker compose logs --tail=50
   only:
     - main
