@@ -6,20 +6,17 @@ stages:
 
 before_script:
   - git submodule sync
-    
-  # Override submodule URLs with CI_JOB_TOKEN (works in GitLab CE)
+
+  # Override submodule URLs using CI_JOB_TOKEN (works in GitLab CE)
   - git submodule set-url frontend "https://gitlab-ci-token:${CI_JOB_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-frontend.git"
   - git submodule set-url backend  "https://gitlab-ci-token:${CI_JOB_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-backend.git"
 
-  # Pull submodules
+  # Init/update submodules
   - git submodule update --init --recursive
-
 
 validate_compose:
   stage: validate
   script:
-    - git submodule sync
-    - git submodule update --init --recursive
     - echo "Submodules updated"
     - echo "Validating docker-compose.yml..."
     - docker compose config
