@@ -12,7 +12,7 @@ services:
     networks:
       - appnet
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '$$SA_PASSWORD' -C -Q 'SELECT 1' || exit 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'xG4#L4OV7lEeH' -Q 'SELECT 1' || exit 1"]
       interval: 10s
       retries: 10
       timeout: 5s
@@ -31,9 +31,10 @@ services:
       DB_PORT: 1433
       DB_NAME: FootballDatabase
       DB_USER: sa
-      DB_PASSWORD: xG4#L4OV7lEeH
+      DB_PASSWORD: 'xG4#L4OV7lEeH'
     depends_on:
       - mssql
+          condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/swagger-ui/index.html || exit 1"]
       interval: 30s
