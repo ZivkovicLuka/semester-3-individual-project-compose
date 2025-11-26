@@ -1,24 +1,26 @@
 services:
-  mssql:
+  school-mssql: 
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: mssql
+    container_name: school-mssql
     environment:
-      SA_PASSWORD: "xG4#L4OV7lEeH"
+      # These variables are read from the .env file
+      SA_PASSWORD: "MyStrongPassword123!"
       ACCEPT_EULA: "Y"
     ports:
       - "1433:1433"
     volumes:
-      - mssql-data:/var/opt/mssql  
+      - mssql-data:/var/opt/mssql
+      - ./db_init:/docker-entrypoint-initdb.d
     networks:
       - appnet
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'xG4#L4OV7lEeH' -Q 'SELECT 1' || exit 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${SA_PASSWORD} -C -Q 'SELECT 1' || exit 1"]
       interval: 10s
       retries: 10
       timeout: 5s
       start_period: 60s
 
-  backend:
+  school-backend:
     image: zivkovicluka/backend:latest
     container_name: school-backend
     ports:
@@ -27,22 +29,26 @@ services:
       - appnet
     environment:
       JAVA_OPTS: "-Xmx512m"
-      DB_HOST: mssql
-      DB_PORT: 1433
-      DB_NAME: FootballDatabase
-      DB_USER: sa
-      DB_PASSWORD: 'xG4#L4OV7lEeH'
+      # These variables are all read from the .env file
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "${DB_PORT}"
+      DB_NAME: "${DB_NAME}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${SA_PASSWORD}" # Uses the SA_PASSWORD variable for the backend
+      SPRING_DATASOURCE_URL: jdbc:sqlserver://school-mssql:1433;databaseName=FootballDatabase;trustServerCertificate=true
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: "MyStrongPassword123!" 
     depends_on:
-      - mssql
-          condition: service_healthy
+      school-mssql:
+        condition: service_healthy        
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/swagger-ui/index.html || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
       retries: 10
       timeout: 10s
       start_period: 60s
 
-  frontend:
+  school-frontend:
     image: zivkovicluka/frontend:latest
     container_name: school-frontend
     ports:
@@ -50,15 +56,10 @@ services:
     networks:
       - appnet
     environment:
-      VITE_API_URL: "http://backend:8080"  
+      VITE_API_URL: "http://school-backend:8080" # Used 'school-backend' as the internal DNS name
     depends_on:
-      - backend
-    entrypoint: >
-      /bin/sh -c "until curl -s http://backend:8080/swagger-ui/index.html > /dev/null; do
-                   echo 'Waiting for backend...';
-                   sleep 2;
-                 done;
-                 npm start"
+      school-backend:
+        condition: service_healthy
 
 networks:
   appnet:
@@ -66,4 +67,3 @@ networks:
 
 volumes:
   mssql-data:
-    name: mssql-data
