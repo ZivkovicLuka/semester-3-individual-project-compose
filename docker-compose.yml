@@ -65,4 +65,4 @@ networks:
 
 volumes:
   mssql-data:
-    name: myproject-compose_mssql-data
+    name: mssql-data
