@@ -1,44 +1,55 @@
 stages:
-  - prepare
-  - validate
+  - build
   - test
+  - quality
   - deploy
 
-prepare_submodules:
-  stage: prepare
+variables:
+  DB_PASSWORD: $DB_PASSWORD  # Already set in your deployment repo
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+
+build-backend:
+  stage: build
+  image: docker:20.10.24
+  services:
+    - docker:dind
   script:
-    - git submodule sync
-    - git submodule set-url frontend "https://gitlab-ci-token:${CI_SUBMODULE_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-frontend.git"
-    - git submodule set-url backend  "https://gitlab-ci-token:${CI_SUBMODULE_TOKEN}@git.fhict.nl/I555567/semester-3-individual-project-backend.git"
-    - git submodule update --init --recursive
-    - git submodule update --remote backend
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    - docker build -t zivkovicluka/backend:latest ./backend/football-website
+    - docker push zivkovicluka/backend:latest
   only:
     - main
 
-validate_compose:
-  stage: validate
-  needs:
-    - prepare_submodules
+build-frontend:
+  stage: build
+  image: docker:20.10.24
+  services:
+    - docker:dind
   script:
-    - docker compose config
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    - docker build -t zivkovicluka/frontend:latest ./frontend
+    - docker push zivkovicluka/frontend:latest
   only:
     - main
 
-test_infra:
-  stage: test
-  needs:
-    - validate_compose
+sonarqube-check:
+  stage: quality
+  image: sonarsource/sonar-scanner-cli:latest
   script:
-    - if not exist docker-compose.yml exit 1
+    - sonar-scanner -Dsonar.projectKey=football-website
+                    -Dsonar.host.url=http://localhost:9000
+                    -Dsonar.login=$SONAR_TOKEN
   only:
     - main
 
-deploy_stack:
+deploy:
   stage: deploy
-  needs:
-    - test_infra
+  image: docker/compose:2.20.2
+  services:
+    - docker:dind
   script:
-    - docker compose pull
-    - docker compose up -d --remove-orphans
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    - docker-compose -f docker-compose.yml up -d --build
   only:
     - main
