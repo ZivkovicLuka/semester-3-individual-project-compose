@@ -31,7 +31,7 @@ services:
       DB_PORT: 1433
       DB_NAME: FootballDatabase
       DB_USER: sa
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: xG4#L4OV7lEeH
     depends_on:
       - mssql
     healthcheck:
